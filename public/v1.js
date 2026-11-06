@@ -2,7 +2,7 @@
 /*
   One tag per site:
 
-    <script defer src="https://<host>/v1.js"
+    <script defer src="https://promo-popup.whitney-fad.workers.dev/v1.js"
       data-eyebrow="*Holiday* Specials"
       data-headline="$4,000 Off All-On-4 w/ Zirconia or $2,000 Off Single Tooth Implants"
       data-subtext="Now through November 30th"

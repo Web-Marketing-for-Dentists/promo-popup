@@ -12,7 +12,7 @@ Deployed as a Cloudflare Worker serving static files only (`public/`), the same 
 ## Add it to a site
 
 ```html
-<script defer src="https://<host>/v1.js"
+<script defer src="https://promo-popup.whitney-fad.workers.dev/v1.js"
   data-eyebrow="*Holiday* Specials"
   data-headline="$4,000 Off All-On-4 w/ Zirconia or $2,000 Off Single Tooth Implants"
   data-subtext="Now through November 30th"
@@ -23,7 +23,7 @@ Put it last in `<body>`. In Astro, mark it `is:inline` so Astro leaves it alone.
 from a site's config, use `define:vars` or plain attribute expressions:
 
 ```astro
-<script is:inline defer src="https://<host>/v1.js"
+<script is:inline defer src="https://promo-popup.whitney-fad.workers.dev/v1.js"
   data-eyebrow={promo.eyebrow}
   data-headline={promo.headline}
   data-subtext={promo.subtext}
@@ -87,4 +87,6 @@ and form fills, not by popup clicks.
   2. Check: it appears after one second bottom-left, close and Esc dismiss it, a reload keeps it
      closed, and "Reset dismissal" brings it back.
   3. Repeat at phone width, and try the test links on the page (`?mobile=bottom`, `?expires=2020-01-01`).
-- `pnpm deploy` publishes. Add the custom domain route in `wrangler.jsonc` first.
+- `pnpm run deploy` publishes (not `pnpm deploy`, which is a different pnpm command). Live at
+  `https://promo-popup.whitney-fad.workers.dev`. To move to a custom domain, add the route in
+  `wrangler.jsonc` and update each site's tag.
