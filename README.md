@@ -37,7 +37,7 @@ from a site's config, use `define:vars` or plain attribute expressions:
 | `data-headline` | required | The offer. |
 | `data-eyebrow` | none | Line above the offer. `*word*` is shown in italics. |
 | `data-subtext` | none | Line under the offer, usually the end date. |
-| `data-link` | none | Adds a button. A URL, `tel:…`, `#anchor`, or `chat` (opens the GHL chat when `ghl-chat/v1.js` is on the page). |
+| `data-link` | none | Adds a button. A URL, `tel:…`, `#anchor`, `chat` (opens the GHL chat when `ghl-chat/v1.js` is on the page), or `call`. **Use `call` on sites with WhatConverts or CallRail:** it dials the page's own first `tel:` link after the tracking number is swapped in. A hard-coded `tel:` in the popup is never swapped, so those calls lose their ad attribution. With no `tel:` link on the page, no button shows. |
 | `data-cta` | `Claim This Offer` | Button text. Only used with `data-link`. |
 | `data-icon` | `award` | `award` (ribbon badge), `none`, or an image URL. |
 | `data-delay` | `1000` | Milliseconds after page load before it appears. |
@@ -46,7 +46,8 @@ from a site's config, use `define:vars` or plain attribute expressions:
 | `data-dismiss-days` | `0` | `0`: once closed, it stays closed for the browser session. `N`: stays closed for N days. A new headline always shows again. |
 | `data-exclude` | none | Comma-separated path prefixes where it never shows, e.g. `/thank-you,/privacy-policy`. |
 | `data-mobile` | `center` | Below the breakpoint: `center` (matches the reference), `bottom` (compact card pinned to the bottom), or `off`. |
-| `data-breakpoint` | `768` | Viewport width in px where the mobile layout starts. |
+| `data-breakpoint` | `768` | Viewport width in px where the mobile layout starts. Match the site's own mobile breakpoint. |
+| `data-bottom-offset` | `0` | Px to lift the mobile `bottom` card, so it sits above a sticky call bar instead of covering it. |
 | `data-bg` | `#0b2a5e` | Card background. |
 | `data-accent` | `#1f5bd6` | Badge and button colour. |
 | `data-text` | `#ffffff` | Text colour. |

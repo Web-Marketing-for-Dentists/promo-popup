@@ -12,8 +12,9 @@
     data-eyebrow      Small line above the offer. Wrap words in *asterisks* to italicise them.
     data-headline     The offer (required).
     data-subtext      Line under the offer, e.g. the end date.
-    data-link         Optional. Adds a button: a URL, "tel:…", "#anchor", or "chat" (opens the
-                      WM4D GHL chat when ghl-chat/v1.js is on the page).
+    data-link         Optional. Adds a button: a URL, "tel:…", "#anchor", "chat" (opens the
+                      WM4D GHL chat when ghl-chat/v1.js is on the page), or "call" (dials the
+                      page's own first tel: link, so WhatConverts/CallRail number swaps apply).
     data-cta          Button text, default "Claim This Offer". Ignored without data-link.
     data-icon         "award" (default), "none", or an image URL.
 
@@ -31,6 +32,7 @@
                       (compact card pinned to the bottom), or "off".
     data-breakpoint   Viewport width in px where the mobile layout starts, default 768.
                       At and above it, the card sits bottom-left.
+    data-bottom-offset Px to lift the mobile "bottom" card, e.g. the height of a sticky call bar.
 
   Look (any CSS colour)
     data-bg           Card background, default #0b2a5e.
@@ -79,6 +81,7 @@
     exclude: opt("exclude", ""),
     mobile: opt("mobile", "center").toLowerCase(),
     breakpoint: num(opt("breakpoint", ""), 768),
+    bottomOffset: num(opt("bottomOffset", ""), 0),
     bg: opt("bg", "#0b2a5e"),
     accent: opt("accent", "#1f5bd6"),
     text: opt("text", "#ffffff"),
@@ -200,7 +203,7 @@
     ".m-center .headline{font-size:22px}" +
     ".m-center .subtext{font-size:16px;margin-top:12px}" +
     /* Mobile: compact, pinned to the bottom so the page stays readable */
-    ".card.m-bottom{left:12px;right:12px;bottom:12px;width:auto;max-width:none;padding:18px 48px 18px 18px;text-align:left}" +
+    ".card.m-bottom{left:12px;right:12px;bottom:calc(12px + var(--pp-offset,0px));width:auto;max-width:none;padding:18px 48px 18px 18px;text-align:left}" +
     ".m-bottom .badge{display:none}" +
     ".m-bottom .eyebrow{font-size:14px;margin-bottom:4px}" +
     ".m-bottom .headline{font-size:17px}" +
@@ -239,6 +242,13 @@
     });
   }
 
+  // The page's own phone link, after WhatConverts/CallRail number swapping. Call tracking
+  // can't see inside the popup's shadow DOM, so a hard-coded tel: there would lose attribution.
+  function pagePhoneHref() {
+    var a = document.querySelector('a[href^="tel:"]');
+    return a ? a.getAttribute("href") : "";
+  }
+
   var host, card, timer, shown = false;
 
   function build() {
@@ -250,6 +260,7 @@
     host.style.setProperty("--pp-accent", cfg.accent);
     host.style.setProperty("--pp-text", cfg.text);
     if (cfg.font) host.style.setProperty("--pp-font", cfg.font);
+    if (cfg.bottomOffset) host.style.setProperty("--pp-offset", cfg.bottomOffset + "px");
 
     var style = document.createElement("style");
     style.textContent = CSS;
@@ -295,12 +306,17 @@
       card.appendChild(st);
     }
 
-    if (cfg.link) {
-      var isChat = cfg.link.toLowerCase() === "chat";
+    var linkKind = cfg.link.toLowerCase();
+    if (linkKind === "call" && !pagePhoneHref()) linkKind = ""; // no number on the page: no button
+    if (cfg.link && linkKind) {
+      var isChat = linkKind === "chat";
+      var isCall = linkKind === "call";
       var cta = el(isChat ? "button" : "a", "cta", cfg.cta);
       if (isChat) cta.type = "button";
-      else cta.href = cfg.link;
+      else cta.href = isCall ? pagePhoneHref() : cfg.link;
       cta.addEventListener("click", function () {
+        // Re-read at click time: call tracking may have swapped the number since build().
+        if (isCall) cta.href = pagePhoneHref() || cta.href;
         emit("click");
         remember();
         hide();
