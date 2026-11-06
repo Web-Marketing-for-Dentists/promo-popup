@@ -39,6 +39,8 @@ from a site's config, use `define:vars` or plain attribute expressions:
 | `data-subtext` | none | Line under the offer, usually the end date. |
 | `data-link` | none | Adds a button. A URL, `tel:…`, `#anchor`, `chat` (opens the GHL chat when `ghl-chat/v1.js` is on the page), or `call`. **Use `call` on sites with WhatConverts or CallRail:** it dials the page's own first `tel:` link after the tracking number is swapped in. A hard-coded `tel:` in the popup is never swapped, so those calls lose their ad attribution. With no `tel:` link on the page, no button shows. |
 | `data-cta` | `Claim This Offer` | Button text. Only used with `data-link`. |
+| `data-desktop-link` | `data-link` | Button target at and above the breakpoint. Typical setup: `data-link="call"` for phones, `data-desktop-link="#consult"` for desktop, since desktop visitors rarely call from the page. `#id` scrolls smoothly to that section and puts the cursor in its first form field. |
+| `data-desktop-cta` | `data-cta` | Button text at and above the breakpoint, e.g. "Claim 20% Off" when phones show "Call to Claim 20% Off". |
 | `data-icon` | `award` | `award` (ribbon badge), `none`, or an image URL. |
 | `data-delay` | `1000` | Milliseconds after page load before it appears. |
 | `data-starts` | none | `YYYY-MM-DD`. Hidden before this date, in the visitor's local time. |

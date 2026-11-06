@@ -16,6 +16,9 @@
                       WM4D GHL chat when ghl-chat/v1.js is on the page), or "call" (dials the
                       page's own first tel: link, so WhatConverts/CallRail number swaps apply).
     data-cta          Button text, default "Claim This Offer". Ignored without data-link.
+    data-desktop-link At and above the breakpoint, use this instead of data-link. "#id" scrolls
+                      to that section and focuses its first field, e.g. "#consult" for the form.
+    data-desktop-cta  At and above the breakpoint, use this button text instead of data-cta.
     data-icon         "award" (default), "none", or an image URL.
 
   Timing
@@ -82,6 +85,8 @@
     mobile: opt("mobile", "center").toLowerCase(),
     breakpoint: num(opt("breakpoint", ""), 768),
     bottomOffset: num(opt("bottomOffset", ""), 0),
+    desktopLink: opt("desktopLink", ""),
+    desktopCta: opt("desktopCta", ""),
     bg: opt("bg", "#0b2a5e"),
     accent: opt("accent", "#1f5bd6"),
     text: opt("text", "#ffffff"),
@@ -249,7 +254,7 @@
     return a ? a.getAttribute("href") : "";
   }
 
-  var host, card, timer, shown = false;
+  var host, card, cta, timer, shown = false;
 
   function build() {
     host = document.createElement("div");
@@ -306,24 +311,28 @@
       card.appendChild(st);
     }
 
-    var linkKind = cfg.link.toLowerCase();
-    if (linkKind === "call" && !pagePhoneHref()) linkKind = ""; // no number on the page: no button
-    if (cfg.link && linkKind) {
-      var isChat = linkKind === "chat";
-      var isCall = linkKind === "call";
-      var cta = el(isChat ? "button" : "a", "cta", cfg.cta);
-      if (isChat) cta.type = "button";
-      else cta.href = isCall ? pagePhoneHref() : cfg.link;
-      cta.addEventListener("click", function () {
-        // Re-read at click time: call tracking may have swapped the number since build().
-        if (isCall) cta.href = pagePhoneHref() || cta.href;
-        emit("click");
-        remember();
-        hide();
-        if (isChat && window.wm4dGhlChat) window.wm4dGhlChat.open();
-      });
-      card.appendChild(cta);
-    }
+    // One button; its text and target follow the layout (data-desktop-* above the breakpoint).
+    cta = el("a", "cta");
+    cta.addEventListener("click", function (e) {
+      var b = currentButton();
+      if (!b) return e.preventDefault();
+      // Re-read at click time: call tracking may have swapped the number since the card was built.
+      if (b.kind === "call") cta.href = pagePhoneHref() || cta.href;
+      emit("click");
+      remember();
+      hide();
+      if (b.kind === "chat") {
+        e.preventDefault();
+        if (window.wm4dGhlChat) window.wm4dGhlChat.open();
+      } else if (b.kind === "anchor") {
+        var target = document.getElementById(b.href.slice(1));
+        if (target) {
+          e.preventDefault();
+          scrollToForm(target);
+        }
+      }
+    });
+    card.appendChild(cta);
 
     root.appendChild(card);
     document.body.appendChild(host);
@@ -341,8 +350,68 @@
     });
   }
 
+  // What the button should do in the current layout, or null for no button.
+  function currentButton() {
+    var desktop = !mq.matches;
+    var link = (desktop && cfg.desktopLink) || cfg.link;
+    var text = (desktop && cfg.desktopCta) || cfg.cta;
+    if (!link) return null;
+    var lower = link.toLowerCase();
+    if (lower === "call") {
+      var tel = pagePhoneHref();
+      return tel ? { kind: "call", href: tel, text: text } : null; // no number on the page
+    }
+    if (lower === "chat") return { kind: "chat", href: "#", text: text };
+    if (link.charAt(0) === "#") return { kind: "anchor", href: link, text: text };
+    return { kind: "url", href: link, text: text };
+  }
+
+  function updateButton() {
+    var b = currentButton();
+    cta.hidden = !b;
+    cta.style.display = b ? "" : "none";
+    if (!b) return;
+    cta.textContent = b.text;
+    cta.href = b.href;
+    if (b.kind === "chat") cta.setAttribute("role", "button");
+    else cta.removeAttribute("role");
+  }
+
+  // Scroll to an on-page section (e.g. the form) and put the cursor in its first field.
+  function scrollToForm(target) {
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    var field = target.querySelector(
+      'input:not([type="hidden"]):not([tabindex="-1"]), select, textarea'
+    );
+    if (history.replaceState) history.replaceState(null, "", "#" + target.id);
+    if (!field) return;
+    // Focus only after the scroll settles: focusing mid-scroll cancels a smooth scroll in Chrome.
+    var done = false;
+    function focusField() {
+      if (done) return;
+      done = true;
+      window.removeEventListener("scrollend", focusField);
+      // Safety net: if the smooth scroll was cancelled or never ran, jump there instead.
+      // (Overrides the site's CSS scroll-behavior for this one call.)
+      if (Math.abs(target.getBoundingClientRect().top) > 150) {
+        var rootStyle = document.documentElement.style;
+        var prev = rootStyle.scrollBehavior;
+        rootStyle.scrollBehavior = "auto";
+        target.scrollIntoView({ block: "start" });
+        rootStyle.scrollBehavior = prev;
+      }
+      try {
+        field.focus({ preventScroll: true });
+      } catch (err) {}
+    }
+    if ("onscrollend" in window) window.addEventListener("scrollend", focusField);
+    setTimeout(focusField, 1500);
+  }
+
   function applyLayout() {
     if (!card) return;
+    updateButton();
     card.classList.remove("m-center", "m-bottom");
     if (mq.matches) {
       if (cfg.mobile === "off") return hide();
