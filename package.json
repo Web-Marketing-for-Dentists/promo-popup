@@ -1,0 +1,14 @@
+{
+  "name": "promo-popup",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hosted promo popup (bottom-left on desktop, centred on mobile) shared by WM4D's sites. Cloudflare Workers static assets.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.59.2"
+  },
+  "packageManager": "pnpm@10.16.1"
+}
